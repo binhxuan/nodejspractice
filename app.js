@@ -1,11 +1,71 @@
 const express = require('express');
-const app = express();
-const port = 3000;
 
-app.get('/', (req, res) => {
-  res.send('Hello World!');
-});
+const mongoose = require('mongoose');
+const session = require('express-session');
+const MongoDBStore = require('connect-mongodb-session')(session);
 
-app.listen(port, () => {
-  console.log(`Example app listening on port ${port}`);
-});
+const User = require('./models/user');
+
+const MONGODB_URI =
+  'mongodb+srv://binhxuan1896:admin@cluster0.1qpr2.mongodb.net/practice_node?retryWrites=true&w=majority&appName=Cluster0';
+
+const app = express()
+
+app.set('view engine', 'ejs');
+app.set('views', 'views');
+
+mongoose.connect(MONGODB_URI)
+    .then(() => {
+        console.log('Connect successfully')
+
+        const store = new MongoDBStore({
+            uri: MONGODB_URI,
+            collection: 'sessions'
+        })
+
+        store.on('error', (error) => {
+            console.log('Session store error', error)
+        })
+
+        app.use(session({
+            secret: 'my secret',
+            resave: false,
+            saveUninitialized: false,
+            store: store,
+            cookie: {
+                maxAge: 1000 * 60 * 60 * 24
+            }
+        }))
+
+        app.use((req, res, next) => {
+            if (!req.session.user) {
+                return next()
+            }
+            
+            User.findById(req.session.user_id)
+                .then(user => {
+                    if (!user) {
+                        return next()
+                    }
+                    req.user = user
+                    next()
+                })
+                .catch(err => {
+                    next(new Error(err))
+                })
+        })
+
+        const adminData = require('./routes/admin');
+        const shopRoutes = require('./routes/shop');
+        const authRoutes = require('./routes/auth');
+
+        app.use('/admin', adminData)
+        app.use(shopRoutes)
+        app.use(authRoutes)
+
+        app.use(errorController.get404)
+
+    })
+    .catch((err) => {
+        console.error('Connect failed')
+    })

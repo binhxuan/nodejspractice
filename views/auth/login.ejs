@@ -1,0 +1,40 @@
+<%- include('../includes/head.ejs') %>
+
+<body>
+    <%- include('../includes/navigation.ejs') %>
+
+    <main>
+        <% if (errorMessage) { %>
+            <div class="user-message user-message--error">
+                <%= errorMessage %>
+            </div>
+        <% } %>
+        <form action="/login" class="login-form" method="post">
+            <div class="form-control">
+                <label for="email">Email</label>
+                <input 
+                    type="email" 
+                    name="email"
+                    id="email"
+                    class="<%= validationErrors.find(e => e.param === 'email') ? 'invalid' : '' %>"
+                    value="<%= oldInput.email %>"
+                >
+            </div>
+            <div class="form-control">
+                <label for="password">Password</label>
+                <input 
+                    type="password"
+                    name="password"
+                    id="password"
+                    class="<%= validationErrors.find(e => e.param === 'password') ? 'invalid' : '' %>"
+                    value="<%= oldInput.password %>"
+                >
+            </div>
+            <button class="btn" type="submit">Login</button>
+        </form>
+        <div class="centered">
+            <a href="/reset">Reset Password</a>
+        </div>
+    </main>
+</body>
+</html>
